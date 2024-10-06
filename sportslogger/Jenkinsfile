@@ -3,7 +3,7 @@ pipeline {
 
     tools {
         maven 'Maven3' // Ensure Maven3 is installed
-        jdk 'JDK11'    // Ensure JDK11 is installed
+        jdk 'JDK21'    // Ensure JDK11 is installed
     }
 
     environment {
