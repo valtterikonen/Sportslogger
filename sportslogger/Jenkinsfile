@@ -1,0 +1,58 @@
+pipeline {
+    agent any
+
+    tools {
+        maven 'Maven3' // Ensure Maven3 is installed
+        jdk 'JDK11'    // Ensure JDK11 is installed
+    }
+
+    environment {
+        DOCKERHUB_CREDENTIALS = '8169bb21-1a4c-4562-9338-13d446396218'
+        DOCKER_IMAGE = 'valtterikonen/sportslogger'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/valtterikonen/Sportslogger.git'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'mvn clean compile package'
+            }
+        }
+
+        stage('Run Unit Tests and JaCoCo Coverage') {
+            steps {
+                sh 'mvn test jacoco:report'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    docker.build("${DOCKER_IMAGE}:latest")
+                }
+            }
+        }
+
+        stage('Push Docker Image to DockerHub') {
+            steps {
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', "${DOCKERHUB_CREDENTIALS}") {
+                        docker.image("${DOCKER_IMAGE}:latest").push()
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            junit 'target/surefire-reports/*.xml'
+            jacoco execPattern: 'target/jacoco.exec'
+        }
+    }
+}
